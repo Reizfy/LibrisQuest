@@ -1,0 +1,70 @@
+#!/bin/bash
+
+gitBranch="main"
+projectPath="/opt/librisquest/backend"
+dockerName="librisquest-backend"
+
+RED='\033[1;31m'
+NC='\033[0m' # No Color
+
+Help()
+{
+    echo "Deployment bash script for LibrisQuest Backend"
+    echo -e "Project Path: ${RED}$projectPath${NC}"
+    echo -e "Branch: ${RED}$gitBranch${NC}"
+    echo -e "Docker Name: ${RED}$dockerName${NC}"
+    echo
+    echo "./deploy.sh -h    Helper"
+    echo "./deploy.sh -g    Git pull"
+    echo "./deploy.sh -d    Rebuild & deploy service"
+    echo "./deploy.sh -r    Restart service"
+    echo "./deploy.sh -u    Uninstall service"
+    echo "./deploy.sh -l    View logs"
+    echo
+}
+
+GitPull()
+{
+    echo -e "${RED}--- Git pull $gitBranch ---${NC}"
+    cd $projectPath && git checkout $gitBranch && git pull origin $gitBranch
+}
+
+Deploy()
+{
+    GitPull
+    echo -e "${RED}--- Deploy service ---${NC}"
+    cd $projectPath && docker compose up -d --no-deps --build $dockerName
+}
+
+Restart()
+{
+    GitPull
+    echo -e "${RED}--- Restart service ---${NC}"
+    cd $projectPath && docker compose restart $dockerName
+}
+
+Uninstall()
+{
+    echo -e "${RED}--- Stop & remove service ---${NC}"
+    cd $projectPath && docker compose down
+}
+
+Logs()
+{
+    echo -e "${RED}--- Follow logs ---${NC}"
+    cd $projectPath && docker compose logs -f $dockerName
+}
+
+while getopts ":hgdrui" option; do
+    case $option in
+        h) Help; exit;;
+        g) GitPull; exit;;
+        d) Deploy; exit;;
+        r) Restart; exit;;
+        u) Uninstall; exit;;
+        l) Logs; exit;;
+        \?) echo "Invalid option"; exit;;
+    esac
+done
+
+Help
